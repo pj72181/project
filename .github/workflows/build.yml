@@ -2,51 +2,46 @@ name: CI
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 0 1,15 * *'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v4  # Updated to use Node.js 20
+      - uses: actions/checkout@v4
 
-      # used to cache dependencies with a timeout
+     # used to cache dependencies with a timeout
       - name: Get Date
         id: get-date
         run: |
-          echo "date=$(date -u "+%Y%m%d")" >> $GITHUB_ENV  # Updated to use environment files
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
         shell: bash
 
       - name: Cache Buildozer global directory
-        uses: actions/cache@v4  # Updated to use Node.js 20
+        uses: actions/cache@v4
         with:
           path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
 
-      - uses: actions/cache@v4  # Updated to use Node.js 20
+      - uses: actions/cache@v4
         with:
           path: .buildozer
-          key: ${{ runner.os }}-${{ env.date }}-${{ hashFiles('buildozer.spec') }}
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
       - name: Build with Buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
         id: buildozer
         with:
           command: buildozer android debug
-          buildozer_version: master
+          buildozer_version: stable
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4  # Updated to use Node.js 20
+        uses: actions/upload-artifact@v2
         with:
           name: package
           path: ${{ steps.buildozer.outputs.filename }}
 
-        with:
-          name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+
+    
 
 
