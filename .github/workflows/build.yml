@@ -1,35 +1,39 @@
-on: workflow_dispatch
+name: CI
+on:
+  push:
+    branches: [main]
 
-name: Build
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+  build:
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install npm dependencies
-        run: npm install
+      # Used to cache dependencies with a timeout
+      - name: Get Date
+        id: get-date
+        run: echo "date=$(date -u +%Y%m%d)" >> $GITHUB_ENV
 
-      - name: Build Android Release
-        run: cd android && ./gradlew assembleRelease
-
-      - name: Read package.json
-        uses: tyankatsu0105/read-package-version-actions@v1
-        id: package-version
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
         with:
-          name: app-release.apk
-          path: android/app/build/outputs/apk/release/
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
-      - name: Create Github Release
-        uses: ncipollo/release-action@v1
+      - uses: actions/cache@v4
         with:
-          artifacts: "android/app/build/outputs/apk/release/app-release.apk"
-          tag: "v${{ steps.package-version.outputs.version }}"
-          replacesArtifacts: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-          allowUpdates: true
+          path: .buildozer
+          key: ${{ runner.os }}-${{ env.date }}-${{ hashFiles('buildozer.spec') }}
+
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: stable
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
