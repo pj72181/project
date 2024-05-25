@@ -8,7 +8,9 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4  # Checkout code from GitHub repository
+      with:  # Add the 'ci: false' option to disable credential configuration
+        ci: false
 
      # used to cache dependencies with a timeout
       - name: Get Date
