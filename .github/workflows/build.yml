@@ -7,7 +7,11 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+          clean: true     # Clean the repo before checking out
 
       # Used to cache dependencies with a timeout
       - name: Get Date
@@ -37,3 +41,4 @@ jobs:
         with:
           name: package
           path: ${{ steps.buildozer.outputs.filename }}
+
