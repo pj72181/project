@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python environment
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10.12'  # Specify the Python version required for Buildozer and Kivy
+          python-version: '3.8'  # Specify the Python version required for Buildozer and Kivy
 
       - name: Install dependencies
         run: |
@@ -49,8 +49,9 @@ jobs:
         working-directory: .  # Adjust if your buildozer.spec is in a subdirectory
 
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: kivy-app-apk
           path: bin/*.apk  # Path to your generated APK file(s)
+
 
