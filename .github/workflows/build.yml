@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Change ownership of .git directory
+        run: sudo chown -R $USER:$USER .git
+
       - name: Get Date
         id: get-date
         run: echo "date=$(date -u +%Y%m%d)" >> $GITHUB_ENV
