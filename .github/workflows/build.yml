@@ -1,42 +1,35 @@
-name: CI
-on:
-  push:
-    branches: [main]
+on: workflow_dispatch
 
+name: Build
 jobs:
-  build:
-    runs-on: ubuntu-20.04
-    steps: 
-      - uses: actions/checkout@v4
-        with:
-          ci: false
+  build-android:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
 
-      # Used to cache dependencies with a timeout
-      - name: Get Date
-        id: get-date
-        run: echo "::set-output name=date::$(date -u +%Y%m%d)"
-        shell: bash
+      - name: Install npm dependencies
+        run: npm install
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v4
-        with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
+      - name: Build Android Release
+        run: cd android && ./gradlew assembleRelease
 
-      - uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+      - name: Read package.json
+        uses: tyankatsu0105/read-package-version-actions@v1
+        id: package-version
 
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          command: buildozer android debug
-          buildozer_version: stable
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+      - name: Create Github Release
+        uses: ncipollo/release-action@v1
         with:
-          name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          artifacts: "android/app/build/outputs/apk/release/app-release.apk"
+          tag: "v${{ steps.package-version.outputs.version }}"
+          replacesArtifacts: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
